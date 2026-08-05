@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eatGrow — Find Healthy Food Near You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EDF0E1;
+    --card: #FAF7EC;
+    --ink: #20301C;
+    --tomato: #C1440E;
+    --turmeric: #E8A93E;
+    --spinach: #3D6B3A;
+    --plum: #5B3758;
+    --line: rgba(32,48,28,0.16);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(rgba(32,48,28,0.05) 1px, transparent 1px);
+    background-size: 14px 14px;
+    color: var(--ink);
+    font-family: 'Work Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .stamp-font{ font-family:'Alfa Slab One', serif; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+
+  a{ color:inherit; }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:22px 5vw 18px;
+    border-bottom: 3px solid var(--ink);
+    flex-wrap:wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .stamp-logo{
+    width:56px; height:56px; border-radius:50%;
+    background: var(--spinach);
+    border:3px solid var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    transform: rotate(-8deg);
+    flex-shrink:0;
+  }
+  .stamp-logo span{ font-size:26px; }
+  .brand h1{
+    margin:0; font-size:clamp(28px,4vw,38px);
+    letter-spacing:0.5px;
+  }
+  .brand p{
+    margin:2px 0 0; font-size:13px; letter-spacing:2.5px;
+    text-transform:uppercase; color: var(--spinach); font-weight:600;
+  }
+  .header-note{
+    max-width:280px; font-size:13.5px; line-height:1.5;
+    color: rgba(32,48,28,0.75); text-align:right;
+  }
+  @media (max-width:640px){ .header-note{ text-align:left; max-width:100%; } }
+
+  main{ padding: 28px 5vw 60px; max-width:1280px; margin:0 auto; }
+
+  /* ---------- Filter crate ---------- */
+  .crate{
+    border: 2px dashed var(--ink);
+    border-radius: 14px;
+    padding: 22px 22px 24px;
+    background: var(--card);
+    position:relative;
+  }
+  .crate::before{
+    content:"FILTER CRATE";
+    position:absolute; top:-13px; left:20px;
+    background: var(--turmeric);
+    border:2px solid var(--ink);
+    padding:2px 12px;
+    font-family:'Alfa Slab One',serif;
+    font-size:12px; letter-spacing:1.5px;
+    border-radius:6px;
+    transform: rotate(-2deg);
+  }
+  .filter-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+    gap:16px;
+    margin-top:10px;
+  }
+  .field label{
+    display:block; font-size:11.5px; text-transform:uppercase;
+    letter-spacing:1.2px; font-weight:700; margin-bottom:6px;
+    color: var(--spinach);
+  }
+  select, input[type=range]{ width:100%; }
+  select{
+    padding:9px 10px; border-radius:8px; border:2px solid var(--ink);
+    background: #fff; font-family:'Work Sans',sans-serif; font-size:14px;
+    color: var(--ink);
+  }
+  .range-row{ display:flex; align-items:center; gap:8px; }
+  .range-val{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+    background: var(--ink); color: var(--paper);
+    padding:3px 7px; border-radius:5px; min-width:52px; text-align:center;
+  }
+  input[type=range]{ accent-color: var(--tomato); }
+
+  .find-btn{
+    margin-top:20px;
+    background: var(--tomato); color:#fff; border:2px solid var(--ink);
+    font-family:'Alfa Slab One', serif; font-size:16px; letter-spacing:1px;
+    padding:13px 26px; border-radius:10px; cursor:pointer;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .find-btn:hover{ transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--ink); }
+  .find-btn:active{ transform: translate(0,0); box-shadow: 1px 1px 0 var(--ink); }
+
+  /* ---------- Results header ---------- */
+  .results-bar{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin: 34px 0 16px; flex-wrap:wrap; gap:8px;
+  }
+  .results-bar h2{ margin:0; font-size:20px; }
+  .results-count{ font-size:13px; color:rgba(32,48,28,0.65); }
+
+  /* ---------- Grid & Cards ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px,1fr));
+    gap:22px;
+  }
+  .card{
+    background: var(--card);
+    border:2px solid var(--ink);
+    border-radius: 14px;
+    overflow:visible;
+    position:relative;
+    display:flex; flex-direction:column;
+    transition: transform .15s ease;
+  }
+  .card:hover{ transform: translateY(-3px); }
+  .band{
+    height:64px; border-radius:12px 12px 0 0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 0 16px; border-bottom:2px solid var(--ink);
+  }
+  .band .emoji{ font-size:30px; }
+  .band .name{
+    font-family:'Alfa Slab One',serif; font-size:16px; color:#fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.15);
+  }
+  .stamp-badge{
+    position:absolute; top:-14px; right:-10px;
+    width:74px; height:74px; border-radius:50%;
+    border:3px solid var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    text-align:center; font-family:'Alfa Slab One',serif;
+    font-size:9.5px; line-height:1.15; letter-spacing:0.3px;
+    color:#fff; transform: rotate(9deg);
+    padding:4px;
+  }
+  .card-body{ padding:16px; display:flex; flex-direction:column; gap:10px; flex:1; }
+  .stats{ display:flex; gap:10px; flex-wrap:wrap; }
+  .stat{
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
+    background: rgba(32,48,28,0.06); border:1px solid var(--line);
+    padding:5px 8px; border-radius:7px;
+  }
+  .stat b{ display:block; font-size:13.5px; }
+
+  .shop-line{
+    border-top:1px dashed var(--line); padding-top:10px;
+    font-size:13px;
+  }
+  .shop-btn{
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; background:none; border:none; cursor:pointer;
+    padding:0; color: var(--ink); font-family:'Work Sans',sans-serif;
+    font-size:13.5px; font-weight:600;
+  }
+  .shop-btn .shop-name{ text-decoration: underline; text-underline-offset:3px; }
+  .shop-meta{ font-size:11.5px; color:rgba(32,48,28,0.6); margin-top:2px; }
+
+  .alt-line{ font-size:12px; color:rgba(32,48,28,0.7); }
+  .alt-chips{ display:flex; gap:6px; flex-wrap:wrap; margin-top:5px; }
+  .chip{
+    background: var(--turmeric); border:1.5px solid var(--ink);
+    border-radius:20px; padding:3px 10px; font-size:11.5px; font-weight:600;
+    cursor:pointer;
+  }
+
+  .empty{
+    text-align:center; padding:60px 20px; border:2px dashed var(--ink);
+    border-radius:14px; background: var(--card);
+  }
+  .empty .big{ font-size:44px; }
+  .empty h3{ font-family:'Alfa Slab One',serif; margin:12px 0 6px; }
+  .empty p{ color:rgba(32,48,28,0.7); margin:0 0 16px; }
+  .reset-btn{
+    background:none; border:2px solid var(--ink); border-radius:8px;
+    padding:8px 16px; font-weight:600; cursor:pointer;
+  }
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background: rgba(32,48,28,0.55);
+    display:none; align-items:center; justify-content:center;
+    padding:20px; z-index:50;
+  }
+  .overlay.open{ display:flex; }
+  .modal{
+    background: var(--card); border:3px solid var(--ink); border-radius:16px;
+    max-width:480px; width:100%; overflow:hidden;
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .modal-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 18px; border-bottom:2px solid var(--ink);
+  }
+  .modal-head h3{ margin:0; font-family:'Alfa Slab One',serif; font-size:17px; }
+  .modal-close{
+    background:var(--tomato); color:#fff; border:2px solid var(--ink);
+    width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:15px;
+    line-height:1;
+  }
+  .map-frame{ width:100%; height:240px; border:0; display:block; background:#ddd; }
+  .modal-body{ padding:16px 18px 20px; }
+  .modal-addr{ font-size:13.5px; margin:0 0 14px; color:rgba(32,48,28,0.8); }
+  .directions-btn{
+    display:inline-block; width:100%; text-align:center;
+    background: var(--spinach); color:#fff; text-decoration:none;
+    font-family:'Alfa Slab One',serif; font-size:14px; letter-spacing:0.5px;
+    padding:12px; border-radius:9px; border:2px solid var(--ink);
+  }
+
+  footer{
+    text-align:center; padding:24px; font-size:12px;
+    color: rgba(32,48,28,0.55); border-top:2px solid var(--line);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="stamp-logo"><span>🌱</span></div>
+    <div>
+      <h1 class="stamp-font">eatGrow</h1>
+      <p>eat fresh · grow healthy</p>
+    </div>
+  </div>
+  <div class="header-note">Find fruits &amp; vegetables near you, matched to your budget and nutrition goals.</div>
+</header>
+
+<main>
+
+  <div class="crate">
+    <div class="filter-grid">
+      <div class="field">
+        <label for="citySelect">City</label>
+        <select id="citySelect"></select>
+      </div>
+      <div class="field">
+        <label for="areaSelect">Area</label>
+        <select id="areaSelect"></select>
+      </div>
+      <div class="field">
+        <label>Max Price (₹/kg)</label>
+        <div class="range-row">
+          <input type="range" id="priceRange" min="20" max="300" step="10" value="300">
+          <span class="range-val" id="priceVal">₹300</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Min Protein (g/100g)</label>
+        <div class="range-row">
+          <input type="range" id="proteinRange" min="0" max="12" step="0.5" value="0">
+          <span class="range-val" id="proteinVal">0g</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Max Calories (kcal/100g)</label>
+        <div class="range-row">
+          <input type="range" id="calorieRange" min="20" max="200" step="10" value="200">
+          <span class="range-val" id="calorieVal">200</span>
+        </div>
+      </div>
+    </div>
+    <button class="find-btn" id="findBtn">Find Healthy Food</button>
+  </div>
+
+  <div class="results-bar">
+    <h2 id="resultsTitle">Showing all produce</h2>
+    <span class="results-count" id="resultsCount"></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+</main>
+
+<footer>eatGrow — mock demo data for illustration. Shop names, prices &amp; addresses are placeholders.</footer>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalShopName">Shop</h3>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <iframe class="map-frame" id="mapFrame" src="" loading="lazy"></iframe>
+    <div class="modal-body">
+      <p class="modal-addr" id="modalAddr"></p>
+      <a class="directions-btn" id="directionsBtn" href="#" target="_blank" rel="noopener">Get Directions →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- Mock data ---------------- */
+
+const bandColors = { fruit: 'var(--tomato)', veg: 'var(--spinach)' };
+const bandColorsRaw = { fruit: '#C1440E', veg: '#3D6B3A' };
+const badgeColors = ['#C1440E','#5B3758','#3D6B3A'];
+
+const items = [
+  { id:'spinach', name:'Spinach (Palak)', emoji:'🥬', category:'veg', protein:2.9, calories:23, price:40, alts:['kale','methi'] },
+  { id:'kale', name:'Kale', emoji:'🥬', category:'veg', protein:4.3, calories:49, price:120, alts:['spinach','methi'] },
+  { id:'methi', name:'Methi (Fenugreek Leaves)', emoji:'🌿', category:'veg', protein:4.4, calories:49, price:50, alts:['spinach','kale'] },
+  { id:'broccoli', name:'Broccoli', emoji:'🥦', category:'veg', protein:2.8, calories:34, price:80, alts:['peas','edamame'] },
+  { id:'peas', name:'Green Peas (Matar)', emoji:'🟢', category:'veg', protein:5.4, calories:81, price:90, alts:['broccoli','edamame','corn'] },
+  { id:'edamame', name:'Edamame (Soybean)', emoji:'🫛', category:'veg', protein:11.9, calories:121, price:180, alts:['peas','broccoli'] },
+  { id:'corn', name:'Sweet Corn', emoji:'🌽', category:'veg', protein:3.2, calories:86, price:40, alts:['peas','sweetpotato'] },
+  { id:'sweetpotato', name:'Sweet Potato', emoji:'🍠', category:'veg', protein:1.6, calories:86, price:45, alts:['corn','banana'] },
+  { id:'moringa', name:'Moringa (Drumstick Leaves)', emoji:'🌿', category:'veg', protein:9.4, calories:37, price:60, alts:['spinach','kale'] },
+  { id:'guava', name:'Guava', emoji:'🍈', category:'fruit', protein:2.6, calories:68, price:60, alts:['pomegranate','apple'] },
+  { id:'pomegranate', name:'Pomegranate', emoji:'🍎', category:'fruit', protein:1.7, calories:83, price:150, alts:['guava','apple'] },
+  { id:'banana', name:'Banana', emoji:'🍌', category:'fruit', protein:1.1, calories:89, price:50, alts:['sweetpotato','apple'] },
+  { id:'avocado', name:'Avocado', emoji:'🥑', category:'fruit', protein:2.0, calories:160, price:250, alts:['banana','sweetpotato'] },
+  { id:'apple', name:'Apple', emoji:'🍏', category:'fruit', protein:0.3, calories:52, price:180, alts:['guava','pomegranate'] },
+];
+const itemMap = Object.fromEntries(items.map(i => [i.id, i]));
+
+const cityData = {
+  'Bengaluru': ['Indiranagar','Koramangala','Whitefield'],
+  'Mumbai': ['Andheri','Bandra','Powai'],
+  'Delhi': ['Connaught Place','Saket','Dwarka'],
+};
+
+const shopPrefixes = ['GreenLeaf','Farm Fresh','Nature\'s Basket','Local Harvest','Veggie Village','Daily Greens','Sunrise Produce','Organic Alley','Fresh Route'];
+const shopSuffixes = ['Mart','Grocers','Store','Corner','Market','Co.'];
+
+function hashStr(s){
+  let h = 0;
+  for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+  return h;
+}
+
+// Build 2 shop options per item per area, deterministically
+function shopsFor(itemId, city, area){
+  const shops = [];
+  for(let n=0;n<2;n++){
+    const seed = hashStr(itemId+city+area+n);
+    const prefix = shopPrefixes[seed % shopPrefixes.length];
+    const suffix = shopSuffixes[(seed >> 3) % shopSuffixes.length];
+    const name = `${prefix} ${suffix}`;
+    const variance = 0.85 + ((seed % 30) / 100); // 0.85 - 1.14
+    shops.push({ name, city, area, priceMultiplier: variance });
+  }
+  return shops;
+}
+
+/* ---------------- DOM setup ---------------- */
+
+const citySelect = document.getElementById('citySelect');
+const areaSelect = document.getElementById('areaSelect');
+const priceRange = document.getElementById('priceRange');
+const proteinRange = document.getElementById('proteinRange');
+const calorieRange = document.getElementById('calorieRange');
+const priceVal = document.getElementById('priceVal');
+const proteinVal = document.getElementById('proteinVal');
+const calorieVal = document.getElementById('calorieVal');
+const grid = document.getElementById('grid');
+const resultsTitle = document.getElementById('resultsTitle');
+const resultsCount = document.getElementById('resultsCount');
+
+Object.keys(cityData).forEach(city => {
+  const opt = document.createElement('option');
+  opt.value = city; opt.textContent = city;
+  citySelect.appendChild(opt);
+});
+
+function populateAreas(){
+  areaSelect.innerHTML = '';
+  cityData[citySelect.value].forEach(area => {
+    const opt = document.createElement('option');
+    opt.value = area; opt.textContent = area;
+    areaSelect.appendChild(opt);
+  });
+}
+populateAreas();
+citySelect.addEventListener('change', () => { populateAreas(); render(); });
+areaSelect.addEventListener('change', render);
+
+priceRange.addEventListener('input', () => { priceVal.textContent = '₹'+priceRange.value; });
+proteinRange.addEventListener('input', () => { proteinVal.textContent = proteinRange.value+'g'; });
+calorieRange.addEventListener('input', () => { calorieVal.textContent = calorieRange.value; });
+
+document.getElementById('findBtn').addEventListener('click', render);
+
+function badgeFor(item){
+  if(item.protein >= 5) return { text:'HIGH PROTEIN', color:'#5B3758' };
+  if(item.calories <= 40) return { text:'LOW CAL', color:'#3D6B3A' };
+  if(item.price <= 50) return { text:'BUDGET PICK', color:'#C1440E' };
+  return { text:'FRESH PICK', color:'#E8A93E' };
+}
+
+function buildCard(item, city, area){
+  const shops = shopsFor(item.id, city, area);
+  const primaryShop = shops[0];
+  const finalPrice = Math.round(item.price * primaryShop.priceMultiplier);
+  const badge = badgeFor(item);
+
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const band = document.createElement('div');
+  band.className = 'band';
+  band.style.background = bandColorsRaw[item.category];
+  band.innerHTML = `<span class="emoji">${item.emoji}</span><span class="name">${item.name}</span>`;
+  card.appendChild(band);
+
+  const stampEl = document.createElement('div');
+  stampEl.className = 'stamp-badge';
+  stampEl.style.background = badge.color;
+  stampEl.textContent = badge.text;
+  card.appendChild(stampEl);
+
+  const body = document.createElement('div');
+  body.className = 'card-body';
+
+  const stats = document.createElement('div');
+  stats.className = 'stats';
+  stats.innerHTML = `
+    <div class="stat mono">₹${finalPrice}<br><small>per kg</small></div>
+    <div class="stat mono">${item.protein}g<br><small>protein</small></div>
+    <div class="stat mono">${item.calories}<br><small>kcal /100g</small></div>
+  `;
+  body.appendChild(stats);
+
+  const shopLine = document.createElement('div');
+  shopLine.className = 'shop-line';
+  shopLine.innerHTML = `
+    <button class="shop-btn" data-shop='${JSON.stringify(primaryShop).replace(/'/g,"&apos;")}'>
+      <span class="shop-name">📍 ${primaryShop.name}</span>
+      <span>›</span>
+    </button>
+    <div class="shop-meta">${area}, ${city}</div>
+  `;
+  body.appendChild(shopLine);
+
+  if(item.alts && item.alts.length){
+    const altLine = document.createElement('div');
+    altLine.className = 'alt-line';
+    altLine.innerHTML = `Alternatives:`;
+    const chips = document.createElement('div');
+    chips.className = 'alt-chips';
+    item.alts.forEach(altId => {
+      const alt = itemMap[altId];
+      if(!alt) return;
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = `${alt.emoji} ${alt.name}`;
+      chips.appendChild(chip);
+    });
+    altLine.appendChild(chips);
+    body.appendChild(altLine);
+  }
+
+  card.appendChild(body);
+  return card;
+}
+
+function render(){
+  const city = citySelect.value;
+  const area = areaSelect.value;
+  const maxPrice = Number(priceRange.value);
+  const minProtein = Number(proteinRange.value);
+  const maxCal = Number(calorieRange.value);
+
+  const filtered = items.filter(it =>
+    it.price <= maxPrice && it.protein >= minProtein && it.calories <= maxCal
+  );
+
+  resultsTitle.textContent = `Showing produce for ${area}, ${city}`;
+  resultsCount.textContent = `${filtered.length} item${filtered.length===1?'':'s'} found`;
+
+  grid.innerHTML = '';
+
+  if(filtered.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.style.gridColumn = '1 / -1';
+    empty.innerHTML = `
+      <div class="big">🌾</div>
+      <h3>No matches in this crate</h3>
+      <p>Try loosening your price, protein, or calorie filters.</p>
+      <button class="reset-btn" id="resetBtn">Reset Filters</button>
+    `;
+    grid.appendChild(empty);
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      priceRange.value = 300; proteinRange.value = 0; calorieRange.value = 200;
+      priceVal.textContent = '₹300'; proteinVal.textContent = '0g'; calorieVal.textContent = '200';
+      render();
+    });
+    return;
+  }
+
+  filtered.forEach(item => grid.appendChild(buildCard(item, city, area)));
+}
+
+/* ---------------- Modal / Map ---------------- */
+
+const overlay = document.getElementById('overlay');
+const modalShopName = document.getElementById('modalShopName');
+const modalAddr = document.getElementById('modalAddr');
+const mapFrame = document.getElementById('mapFrame');
+const directionsBtn = document.getElementById('directionsBtn');
+
+grid.addEventListener('click', (e) => {
+  const btn = e.target.closest('.shop-btn');
+  if(!btn) return;
+  const shop = JSON.parse(btn.getAttribute('data-shop').replace(/&apos;/g,"'"));
+  const query = encodeURIComponent(`${shop.name}, ${shop.area}, ${shop.city}, India`);
+  modalShopName.textContent = shop.name;
+  modalAddr.textContent = `${shop.area}, ${shop.city}, India`;
+  mapFrame.src = `https://www.google.com/maps?q=${query}&t=k&output=embed`;
+  directionsBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${query}`;
+  overlay.classList.add('open');
+});
+
+document.getElementById('modalClose').addEventListener('click', () => {
+  overlay.classList.remove('open');
+  mapFrame.src = '';
+});
+overlay.addEventListener('click', (e) => {
+  if(e.target === overlay){ overlay.classList.remove('open'); mapFrame.src=''; }
+});
+
+/* ---------------- init ---------------- */
+render();
+</script>
+
+</body>
+</html>
